@@ -5,24 +5,24 @@ import axios from "axios";
 import querystring from "querystring";
 
 const app = express();
-app.use(cors()); // 外部アクセスを許可
+app.use(cors());
 
+// Vercel Dashboard で登録した環境変数
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 
-// ルートページ（簡易ホーム）
+// ルートページ
 app.get("/", (req, res) => {
   res.send(`
-    <h2>Spotify OAuthサーバーが動作中です</h2>
-    <p><a href="/login">Spotifyにログインする</a></p>
+    <h2>Spotify OAuth サーバー稼働中</h2>
+    <p><a href="/login">Spotifyにログイン</a></p>
   `);
 });
 
 // Spotify認証ページにリダイレクト
 app.get("/login", (req, res) => {
   const scope = "user-read-private user-read-email";
-
   const authUrl = "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
       response_type: "code",
@@ -30,14 +30,12 @@ app.get("/login", (req, res) => {
       scope,
       redirect_uri: REDIRECT_URI,
     });
-
   res.redirect(authUrl);
 });
 
 // コールバック処理
 app.get("/callback", async (req, res) => {
   const code = req.query.code || null;
-
   if (!code) return res.status(400).send("❌ code がありません");
 
   try {
@@ -58,10 +56,10 @@ app.get("/callback", async (req, res) => {
       }
     );
 
-    // 本番ではトークンを表示せずにサーバー内で保持するのが安全
+    // 本番ではアクセストークンはサーバー内で保持する
     res.send(`
       <h2>✅ 認証成功！</h2>
-      <p>アクセストークンはサーバー内で管理してください。</p>
+      <p>アクセストークンはサーバーで安全に保持してください。</p>
     `);
   } catch (err) {
     console.error(err.response?.data || err.message);

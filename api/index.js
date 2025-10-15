@@ -1,4 +1,3 @@
-// api/index.js
 import express from "express";
 import serverless from "serverless-http";
 import cors from "cors";
@@ -6,14 +5,13 @@ import axios from "axios";
 import querystring from "querystring";
 
 const app = express();
-app.use(cors());
+app.use(cors()); // 外部アクセスを許可
 
-// --- 環境変数 ---
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 
-// ルートページ
+// ルートページ（簡易ホーム）
 app.get("/", (req, res) => {
   res.send(`
     <h2>Spotify OAuthサーバーが動作中です</h2>
@@ -40,9 +38,7 @@ app.get("/login", (req, res) => {
 app.get("/callback", async (req, res) => {
   const code = req.query.code || null;
 
-  if (!code) {
-    return res.status(400).send("❌ code がありません");
-  }
+  if (!code) return res.status(400).send("❌ code がありません");
 
   try {
     const tokenRes = await axios.post(
@@ -62,11 +58,10 @@ app.get("/callback", async (req, res) => {
       }
     );
 
-    // アクセストークンなどを表示（デバッグ用）
+    // 本番ではトークンを表示せずにサーバー内で保持するのが安全
     res.send(`
       <h2>✅ 認証成功！</h2>
-      <p>Access Token: ${tokenRes.data.access_token}</p>
-      <p>Refresh Token: ${tokenRes.data.refresh_token}</p>
+      <p>アクセストークンはサーバー内で管理してください。</p>
     `);
   } catch (err) {
     console.error(err.response?.data || err.message);

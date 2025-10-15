@@ -1,0 +1,10 @@
+# 環境変数ファイルは絶対にアップロードしない
+.env
+.env.local
+
+# node_modules は重すぎるので除外
+node_modules/
+
+# OSやエディタの一時ファイルも除外
+.DS_Store
+*.log

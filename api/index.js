@@ -1,3 +1,4 @@
+// api/index.js
 import express from "express";
 import serverless from "serverless-http";
 import cors from "cors";
@@ -7,53 +8,68 @@ import querystring from "querystring";
 const app = express();
 app.use(cors());
 
-const client_id = process.env.SPOTIFY_CLIENT_ID;
-const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
-const redirect_uri = process.env.REDIRECT_URI; // Vercel環境変数に登録
+// --- 環境変数 ---
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
 
-// 🎧 認証開始エンドポイント
+// ルートページ
+app.get("/", (req, res) => {
+  res.send(`
+    <h2>Spotify OAuthサーバーが動作中です</h2>
+    <p><a href="/login">Spotifyにログインする</a></p>
+  `);
+});
+
+// Spotify認証ページにリダイレクト
 app.get("/login", (req, res) => {
   const scope = "user-read-private user-read-email";
-  const authUrl =
-    "https://accounts.spotify.com/authorize?" +
+
+  const authUrl = "https://accounts.spotify.com/authorize?" +
     querystring.stringify({
       response_type: "code",
-      client_id,
+      client_id: CLIENT_ID,
       scope,
-      redirect_uri,
+      redirect_uri: REDIRECT_URI,
     });
 
   res.redirect(authUrl);
 });
 
-// 🎯 コールバック
+// コールバック処理
 app.get("/callback", async (req, res) => {
   const code = req.query.code || null;
 
+  if (!code) {
+    return res.status(400).send("❌ code がありません");
+  }
+
   try {
-    const tokenResponse = await axios.post(
+    const tokenRes = await axios.post(
       "https://accounts.spotify.com/api/token",
       querystring.stringify({
         grant_type: "authorization_code",
         code,
-        redirect_uri,
+        redirect_uri: REDIRECT_URI,
       }),
       {
         headers: {
           Authorization:
             "Basic " +
-            Buffer.from(client_id + ":" + client_secret).toString("base64"),
+            Buffer.from(CLIENT_ID + ":" + CLIENT_SECRET).toString("base64"),
           "Content-Type": "application/x-www-form-urlencoded",
         },
       }
     );
 
-    const { access_token } = tokenResponse.data;
-
-    res.send(`<h2>✅ Spotify 認証成功！</h2>
-              <p>Access Token: ${access_token}</p>`);
-  } catch (error) {
-    console.error(error.response?.data || error.message);
+    // アクセストークンなどを表示（デバッグ用）
+    res.send(`
+      <h2>✅ 認証成功！</h2>
+      <p>Access Token: ${tokenRes.data.access_token}</p>
+      <p>Refresh Token: ${tokenRes.data.refresh_token}</p>
+    `);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
     res.status(400).send("❌ 認証エラー");
   }
 });

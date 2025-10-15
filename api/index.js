@@ -5,9 +5,8 @@ import axios from "axios";
 import querystring from "querystring";
 
 const app = express();
-app.use(cors());
+app.use(cors()); // 外部アクセスを許可
 
-// Vercel Dashboard で登録した環境変数
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
@@ -20,7 +19,7 @@ app.get("/", (req, res) => {
   `);
 });
 
-// Spotify認証ページにリダイレクト
+// Spotifyログインページにリダイレクト
 app.get("/login", (req, res) => {
   const scope = "user-read-private user-read-email";
   const authUrl = "https://accounts.spotify.com/authorize?" +
@@ -56,7 +55,7 @@ app.get("/callback", async (req, res) => {
       }
     );
 
-    // 本番ではアクセストークンはサーバー内で保持する
+    // 本番ではアクセストークンはサーバー側で管理
     res.send(`
       <h2>✅ 認証成功！</h2>
       <p>アクセストークンはサーバーで安全に保持してください。</p>

@@ -1,70 +1,54 @@
-// api/index.js
 import express from "express";
 import serverless from "serverless-http";
-import cors from "cors";
-import axios from "axios";
-import querystring from "querystring";
+import fetch from "node-fetch";
 
 const app = express();
-app.use(cors()); // 外部アクセスを許可
 
-// Vercel Dashboard に登録した環境変数
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
+const REDIRECT_URI = "https://<your-vercel-project>.vercel.app/api/callback"; // ← あなたのURLに変更
 
-// ホームページ
 app.get("/", (req, res) => {
-  res.send(`
-    <h2>Spotify OAuth サーバー稼働中</h2>
-    <p><a href="/api/login">Spotifyにログイン</a></p>
-  `);
+  res.send("✅ Spotify OAuth API 稼働中");
 });
 
-// Spotify認証ページにリダイレクト
-app.get("/api/login", (req, res) => {
+// Spotify認証ページへ
+app.get("/login", (req, res) => {
   const scope = "user-read-private user-read-email";
-  const authUrl = "https://accounts.spotify.com/authorize?" +
-    querystring.stringify({
-      response_type: "code",
-      client_id: CLIENT_ID,
-      scope,
-      redirect_uri: REDIRECT_URI,
-    });
-  res.redirect(authUrl);
+  const authUrl = new URL("https://accounts.spotify.com/authorize");
+  authUrl.search = new URLSearchParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    scope: scope,
+    redirect_uri: REDIRECT_URI,
+  });
+  res.redirect(authUrl.toString());
 });
 
-// Spotify コールバック処理
-app.get("/api/callback", async (req, res) => {
+// 認証後のコールバック
+app.get("/callback", async (req, res) => {
   const code = req.query.code || null;
-  if (!code) return res.status(400).send("❌ code がありません");
 
-  try {
-    const tokenRes = await axios.post(
-      "https://accounts.spotify.com/api/token",
-      querystring.stringify({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: REDIRECT_URI,
-      }),
-      {
-        headers: {
-          Authorization:
-            "Basic " +
-            Buffer.from(CLIENT_ID + ":" + CLIENT_SECRET).toString("base64"),
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      "Authorization":
+        "Basic " + Buffer.from(CLIENT_ID + ":" + CLIENT_SECRET).toString("base64"),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      grant_type: "authorization_code",
+    }),
+  });
 
-    // アクセストークンはサーバー側で保持するのが安全
-    res.send(`
-      <h2>✅ 認証成功！</h2>
-      <p>アクセストークンはサーバーで安全に保持してください。</p>
-    `);
-  } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(400).send("❌ 認証エラー");
+  const data = await response.json();
+
+  if (data.access_token) {
+    res.send(`<h2>🎉 ログイン成功！</h2><p>Access Token: ${data.access_token}</p>`);
+  } else {
+    res.send(`<h2>❌ ログイン失敗</h2><pre>${JSON.stringify(data, null, 2)}</pre>`);
   }
 });
 

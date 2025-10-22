@@ -10,6 +10,8 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center',
       height: '100vh',
+      backgroundColor: '#121212',
+      color: 'white',
       fontFamily: 'sans-serif'
     }}>
       <h1>Spotify Login Demo</h1>

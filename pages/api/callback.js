@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
   const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
 
-  // SpotifyトークンエンドポイントへPOST
+  // アクセストークンを取得
   const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: {
@@ -31,14 +31,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Failed to get access token', details: tokenData });
   }
 
-  // トークンを使ってユーザー情報を取得
+  // Spotifyユーザー情報を取得
   const userResponse = await fetch('https://api.spotify.com/v1/me', {
     headers: { Authorization: 'Bearer ' + tokenData.access_token },
   });
 
   const userData = await userResponse.json();
 
-  // シンプルにJSONで返す（ここをHTML出力にしてもOK）
+  // 結果をJSONで返す
   res.status(200).json({
     message: 'ログイン成功！Spotifyユーザー情報:',
     user: userData,

@@ -1,13 +1,9 @@
 {
-  "name": "spotify-search-app",
+  "name": "spotify-search-no-login",
   "version": "1.0.0",
-  "description": "Spotify API Search App with PKCE Auth (Vercel compatible)",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "vercel dev"
   },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  },
-  "type": "module"
+  "dependencies": {}
 }

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Spotify Search (No Login)</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    input, select, button { margin: 0.5rem 0; padding: 0.4rem; width: 100%; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>🎧 Spotify Search</h1>
+
+  <input id="query" placeholder="曲やアーティスト名を入力" />
+  <select id="type">
+    <option value="track">Track（曲）</option>
+    <option value="artist">Artist（アーティスト）</option>
+  </select>
+  <button onclick="search()">Search</button>
+
+  <pre id="result"></pre>
+
+  <script>
+  async function getAppToken() {
+    const res = await fetch("/api/token");
+    const data = await res.json();
+    localStorage.setItem("access_token", data.access_token);
+    return data.access_token;
+  }
+
+  async function search() {
+    const q = document.getElementById("query").value.trim();
+    if (!q) {
+      alert("検索キーワードを入力してください");
+      return;
+    }
+
+    let token = localStorage.getItem("access_token");
+    if (!token) token = await getAppToken();
+
+    const type = document.getElementById("type").value;
+
+    const res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=${type}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const data = await res.json();
+
+    if (data.error && data.error.status === 401) {
+      // トークン失効時は再取得
+      token = await getAppToken();
+      return search();
+    }
+
+    document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+  }
+  </script>
+</body>
+</html>

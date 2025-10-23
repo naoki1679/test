@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         Authorization:
-          'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
+          'Basic ' + Buffer.from(`${client_id}:${client_secret}`).toString('base64'),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params,
@@ -19,6 +19,7 @@ export default async function handler(req, res) {
     const data = await response.json();
     res.status(200).json(data);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Spotify token fetch failed' });
   }
 }

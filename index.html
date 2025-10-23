@@ -49,7 +49,6 @@
     const data = await res.json();
 
     if (data.error && data.error.status === 401) {
-      // トークン失効時は再取得
       token = await getAppToken();
       return search();
     }
